@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 
+app.use(express.json());
+
 let persons = [
   { 
     "id": "1",
@@ -53,7 +55,21 @@ app.delete('/api/persons/:id', (req, res) => {
   res.status(204).end();
 });
 
-const PORT = 3001; // Ensure port number is 3001
+app.post('/api/persons', (req, res) => {
+  const { name, number } = req.body;
+
+  if (!name || !number) {
+    return res.status(400).json({ error: 'Name or number is missing' });
+  }
+
+  const id = Math.floor(Math.random() * 1000000).toString();
+  const newPerson = { id, name, number };
+  persons = persons.concat(newPerson);
+
+  res.json(newPerson);
+});
+
+const PORT = 3001; // Changed port number to 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

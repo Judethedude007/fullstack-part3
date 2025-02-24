@@ -62,6 +62,11 @@ app.post('/api/persons', (req, res) => {
     return res.status(400).json({ error: 'Name or number is missing' });
   }
 
+  const existingPerson = persons.find(p => p.name === name);
+  if (existingPerson) {
+    return res.status(400).json({ error: 'Name must be unique' });
+  }
+
   const id = Math.floor(Math.random() * 1000000).toString();
   const newPerson = { id, name, number };
   persons = persons.concat(newPerson);

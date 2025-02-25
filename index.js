@@ -110,6 +110,17 @@ app.use((error, req, res, next) => {
   next(error);
 });
 
+// ✅ Error Handler Middleware
+app.use((error, req, res, next) => {
+  console.error('❌ Error:', error.message);
+  if (error.name === 'CastError') {
+    return res.status(400).json({ error: 'Malformatted ID' });
+  } else if (error.name === 'ValidationError') {
+    return res.status(400).json({ error: error.message });
+  }
+  next(error);
+});
+
 // ✅ Start the Server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

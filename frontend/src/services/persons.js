@@ -1,21 +1,12 @@
 import axios from 'axios';
 
-const baseUrl = process.env.REACT_APP_API_URL || '/api/persons';
+const baseUrl = 'http://localhost:3003/api/persons'; // Ensure this is correct
 
-const getAll = () => {
-  return axios.get(baseUrl).then(response => response.data);
+const personsService = {
+  getAll: () => axios.get(baseUrl).then(response => response.data),
+  create: (newPerson) => axios.post(baseUrl, newPerson).then(response => response.data),
+  update: (id, updatedPerson) => axios.put(`${baseUrl}/${id}`, updatedPerson).then(response => response.data),
+  remove: (id) => axios.delete(`${baseUrl}/${id}`).then(response => response.data),
 };
 
-const create = newObject => {
-  return axios.post(baseUrl, newObject).then(response => response.data);
-};
-
-const update = (id, newObject) => {
-  return axios.put(`${baseUrl}/${id}`, newObject).then(response => response.data);
-};
-
-const remove = id => {
-  return axios.delete(`${baseUrl}/${id}`).then(response => response.data);
-};
-
-export default { getAll, create, update, remove };
+export default personsService;

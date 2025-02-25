@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+require('dotenv').config();
 
 if (process.argv.length < 3) {
   console.log('Please provide the password as an argument: node mongo.js <password>');
@@ -6,7 +7,7 @@ if (process.argv.length < 3) {
 }
 
 const password = process.argv[2];
-const url = process.env.MONGODB_URI;
+const url = process.env.MONGO_URL;
 
 mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
 

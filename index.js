@@ -1,23 +1,51 @@
+require('dotenv').config(); // Load environment variables
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
-const Person = require('./models/person'); // Import Mongoose model
-require('dotenv').config();
+const Person = require('./models/person'); // Import the Mongoose model
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
-app.use(morgan('tiny'));
+// ✅ Middleware Setup
+app.use(express.json()); // Allows JSON request bodies
+app.use(cors()); // Enable Cross-Origin Resource Sharing
+app.use(morgan('tiny')); // Log HTTP requests
 
-// ✅ GET All Persons from MongoDB
-app.get('/api/persons', (req, res) => {
-  Person.find({}).then(persons => {
-    res.json(persons);
-  });
+// ✅ Log incoming requests for debugging
+app.use((req, res, next) => {
+  console.log(`📩 Incoming Request: ${req.method} ${req.path}`);
+  next();
 });
 
-// ✅ POST - Add New Person
+// ✅ Load environment variables
+const PORT = process.env.PORT || 3003; // Ensure this matches the frontend
+const MONGO_URL = process.env.MONGO_URL;
+
+if (!MONGO_URL) {
+  console.error('❌ MONGO_URL is not set in .env file');
+  process.exit(1);
+}
+
+// ✅ Connect to MongoDB
+mongoose.connect(MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(error => {
+    console.error('❌ Error connecting to MongoDB:', error.message);
+    process.exit(1); // Exit if DB connection fails
+  });
+
+// ✅ GET - Fetch All Persons
+app.get('/api/persons', (req, res) => {
+  Person.find({})
+    .then(persons => res.json(persons))
+    .catch(error => {
+      console.error('❌ Error fetching persons:', error);
+      res.status(500).json({ error: 'Database error' });
+    });
+});
+
+// ✅ POST - Add a New Person
 app.post('/api/persons', (req, res) => {
   const { name, number } = req.body;
 
@@ -27,18 +55,21 @@ app.post('/api/persons', (req, res) => {
 
   const person = new Person({ name, number });
   person.save()
-    .then(savedPerson => res.json(savedPerson))
-    .catch(error => res.status(500).json({ error: error.message }));
+    .then(savedPerson => res.status(201).json(savedPerson))
+    .catch(error => {
+      console.error('❌ Error saving person:', error);
+      res.status(500).json({ error: 'Error saving to database' });
+    });
 });
 
-// ✅ GET Single Person by ID
+// ✅ GET - Fetch a Single Person by ID
 app.get('/api/persons/:id', (req, res, next) => {
   Person.findById(req.params.id)
-    .then(person => person ? res.json(person) : res.status(404).end())
+    .then(person => person ? res.json(person) : res.status(404).json({ error: 'Person not found' }))
     .catch(error => next(error));
 });
 
-// ✅ DELETE a Person
+// ✅ DELETE - Remove a Person
 app.delete('/api/persons/:id', (req, res, next) => {
   Person.findByIdAndDelete(req.params.id)
     .then(() => res.status(204).end())
@@ -48,6 +79,11 @@ app.delete('/api/persons/:id', (req, res, next) => {
 // ✅ PUT - Update a Person's Number
 app.put('/api/persons/:id', (req, res, next) => {
   const { name, number } = req.body;
+
+  if (!name || !number) {
+    return res.status(400).json({ error: 'Name and number are required' });
+  }
+
   const updatedPerson = { name, number };
 
   Person.findByIdAndUpdate(req.params.id, updatedPerson, { new: true })
@@ -57,19 +93,19 @@ app.put('/api/persons/:id', (req, res, next) => {
 
 // ✅ Middleware for Unknown Routes
 app.use((req, res) => {
-  res.status(404).send({ error: 'Unknown endpoint' });
+  res.status(404).json({ error: 'Unknown endpoint' });
 });
 
 // ✅ Error Handling Middleware
 app.use((error, req, res, next) => {
-  console.error(error.message);
+  console.error('❌ Error:', error.message);
   if (error.name === 'CastError') {
-    return res.status(400).send({ error: 'Malformatted ID' });
+    return res.status(400).json({ error: 'Malformatted ID' });
   }
   next(error);
 });
 
-const PORT = process.env.PORT || 3002;
+// ✅ Start the Server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

@@ -78,7 +78,7 @@ app.post('/api/persons', (req, res) => {
   res.json(newPerson);
 });
 
-const PORT = 3001; // Ensure port number is 3001
+const PORT = process.env.PORT || 3001; // Use the port provided by Render
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

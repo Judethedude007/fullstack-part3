@@ -1,95 +1,75 @@
 const express = require('express');
-const morgan = require('morgan');
-const path = require('path');
 const cors = require('cors');
-const mongoose = require('mongoose');
+const morgan = require('morgan');
+const Person = require('./models/person'); // Import Mongoose model
+require('dotenv').config();
+
 const app = express();
-
-require('dotenv').config(); // Ensure this line is present
-
-const mongoUrl = process.env.MONGO_URL;
-mongoose.connect(mongoUrl)
-  .then(() => {
-    console.log('Connected to MongoDB');
-  })
-  .catch((error) => {
-    console.error('Error connecting to MongoDB:', error.message);
-  });
 
 app.use(cors());
 app.use(express.json());
+app.use(morgan('tiny'));
 
-morgan.token('body', (req) => JSON.stringify(req.body));
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
-
-const personSchema = new mongoose.Schema({
-  name: String,
-  number: String,
-});
-
-const Person = mongoose.model('Person', personSchema);
-
-// Serve static files from the frontend build directory
-app.use(express.static(path.join(__dirname, 'frontend', 'build')));
-
-app.get('/info', (req, res) => {
-  Person.countDocuments({}).then(count => {
-    const requestTime = new Date();
-    res.send(`
-      <p>Phonebook has info for ${count} people</p>
-      <p>${requestTime}</p>
-    `);
-  });
-});
-
+// ✅ GET All Persons from MongoDB
 app.get('/api/persons', (req, res) => {
   Person.find({}).then(persons => {
     res.json(persons);
   });
 });
 
-app.get('/api/persons/:id', (req, res) => {
-  Person.findById(req.params.id).then(person => {
-    if (person) {
-      res.json(person);
-    } else {
-      res.status(404).send({ error: 'Person not found' });
-    }
-  }).catch(error => {
-    res.status(400).send({ error: 'Malformatted id' });
-  });
-});
-
-app.delete('/api/persons/:id', (req, res) => {
-  Person.findByIdAndRemove(req.params.id).then(() => {
-    res.status(204).end();
-  }).catch(error => {
-    res.status(400).send({ error: 'Malformatted id' });
-  });
-});
-
+// ✅ POST - Add New Person
 app.post('/api/persons', (req, res) => {
   const { name, number } = req.body;
 
   if (!name || !number) {
-    return res.status(400).json({ error: 'Name or number is missing' });
+    return res.status(400).json({ error: 'Name and number are required' });
   }
 
-  const person = new Person({
-    name,
-    number,
-  });
-
-  person.save().then(savedPerson => {
-    res.json(savedPerson);
-  });
+  const person = new Person({ name, number });
+  person.save()
+    .then(savedPerson => res.json(savedPerson))
+    .catch(error => res.status(500).json({ error: error.message }));
 });
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
+// ✅ GET Single Person by ID
+app.get('/api/persons/:id', (req, res, next) => {
+  Person.findById(req.params.id)
+    .then(person => person ? res.json(person) : res.status(404).end())
+    .catch(error => next(error));
 });
 
-const PORT = process.env.PORT || 3002; // Use the port provided by the .env file
+// ✅ DELETE a Person
+app.delete('/api/persons/:id', (req, res, next) => {
+  Person.findByIdAndDelete(req.params.id)
+    .then(() => res.status(204).end())
+    .catch(error => next(error));
+});
+
+// ✅ PUT - Update a Person's Number
+app.put('/api/persons/:id', (req, res, next) => {
+  const { name, number } = req.body;
+  const updatedPerson = { name, number };
+
+  Person.findByIdAndUpdate(req.params.id, updatedPerson, { new: true })
+    .then(updated => res.json(updated))
+    .catch(error => next(error));
+});
+
+// ✅ Middleware for Unknown Routes
+app.use((req, res) => {
+  res.status(404).send({ error: 'Unknown endpoint' });
+});
+
+// ✅ Error Handling Middleware
+app.use((error, req, res, next) => {
+  console.error(error.message);
+  if (error.name === 'CastError') {
+    return res.status(400).send({ error: 'Malformatted ID' });
+  }
+  next(error);
+});
+
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -103,6 +103,18 @@ app.put('/api/persons/:id', (req, res, next) => {
     .catch(error => next(error));
 });
 
+// ✅ GET - Info Route
+app.get('/info', (req, res) => {
+  Person.countDocuments({})
+    .then(count => {
+      res.send(`<p>Phonebook has info for ${count} people</p><p>${new Date()}</p>`);
+    })
+    .catch(error => {
+      console.error('❌ Error fetching info:', error);
+      res.status(500).json({ error: 'Database error' });
+    });
+});
+
 // ✅ Middleware for Unknown Routes
 app.use((req, res) => {
   res.status(404).json({ error: 'Unknown endpoint' });

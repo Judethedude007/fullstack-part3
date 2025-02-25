@@ -1,7 +1,10 @@
 const express = require('express');
 const morgan = require('morgan');
+const path = require('path');
+const cors = require('cors');
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 morgan.token('body', (req) => JSON.stringify(req.body));
@@ -30,6 +33,9 @@ let persons = [
   }
 ];
 
+// Serve static files from the frontend build directory
+app.use(express.static(path.join(__dirname, 'frontend', 'build')));
+
 app.get('/info', (req, res) => {
   const numberOfEntries = persons.length;
   const requestTime = new Date();
@@ -40,6 +46,7 @@ app.get('/info', (req, res) => {
 });
 
 app.get('/api/persons', (req, res) => {
+  console.log('Returning persons:', persons); // Add this line
   res.json(persons);
 });
 
@@ -76,6 +83,10 @@ app.post('/api/persons', (req, res) => {
   persons = persons.concat(newPerson);
 
   res.json(newPerson);
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3001; // Use the port provided by Render

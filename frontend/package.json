@@ -4,14 +4,14 @@
   "private": true,
   "dependencies": {
     "axios": "^0.21.1",
-    "cross-env": "^7.0.3",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "4.0.3"
   },
   "scripts": {
+    "homepage": "https://fullstack-part3-ulnt.onrender.com",
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider PORT=3002 react-scripts start",
-    "build": "react-scripts build",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -32,5 +32,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }

@@ -1,1 +1,5 @@
 node_modules
+
+# Remove the following line if it exists
+# /frontend/build
+

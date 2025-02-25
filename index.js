@@ -69,10 +69,15 @@ app.get('/api/persons/:id', (req, res, next) => {
     .catch(error => next(error));
 });
 
-// ✅ DELETE - Remove a Person
+// ✅ DELETE - Remove a Person (Updated)
 app.delete('/api/persons/:id', (req, res, next) => {
   Person.findByIdAndDelete(req.params.id)
-    .then(() => res.status(204).end())
+    .then(deletedPerson => {
+      if (!deletedPerson) {
+        return res.status(404).json({ error: 'Person not found' });
+      }
+      res.status(204).end();
+    })
     .catch(error => next(error));
 });
 

@@ -46,20 +46,27 @@ app.get('/api/persons', (req, res) => {
 });
 
 // ✅ POST - Add a New Person
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
   const { name, number } = req.body;
 
   if (!name || !number) {
     return res.status(400).json({ error: 'Name and number are required' });
   }
 
-  const person = new Person({ name, number });
-  person.save()
+  Person.findOne({ name })
+    .then(existingPerson => {
+      if (existingPerson) {
+        // Update the existing person's number
+        existingPerson.number = number;
+        return existingPerson.save();
+      } else {
+        // Create a new person
+        const person = new Person({ name, number });
+        return person.save();
+      }
+    })
     .then(savedPerson => res.status(201).json(savedPerson))
-    .catch(error => {
-      console.error('❌ Error saving person:', error);
-      res.status(500).json({ error: 'Error saving to database' });
-    });
+    .catch(error => next(error));
 });
 
 // ✅ GET - Fetch a Single Person by ID

@@ -5,6 +5,7 @@ const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
+  const [errorMessage, setErrorMessage] = useState(null);
 
   // Fetch all persons from the backend when the component mounts
   useEffect(() => {
@@ -30,7 +31,10 @@ const App = () => {
         setNewNumber('');
       })
       .catch(error => {
-        console.error("Error adding person:", error);
+        setErrorMessage(error.response.data.error);
+        setTimeout(() => {
+          setErrorMessage(null);
+        }, 5000);
       });
   };
 
@@ -50,6 +54,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+
+      {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
 
       <form onSubmit={addPerson}>
         <div>

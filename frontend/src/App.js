@@ -40,13 +40,13 @@ const App = () => {
 
   // Function to handle deleting a person
   const deletePerson = (id) => {
-    if (window.confirm("Are you sure you want to delete this person?")) {
+    if (window.confirm('Are you sure you want to delete this person?')) {
       personsService.remove(id)
         .then(() => {
           setPersons(persons.filter(person => person.id !== id));
         })
         .catch(error => {
-          console.error("Error deleting person:", error);
+          console.error('Error deleting person:', error);
         });
     }
   };

@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');
 const Person = require('./models/person'); // Import the Mongoose model
 
 const app = express();
@@ -11,6 +12,9 @@ const app = express();
 app.use(express.json()); // Allows JSON request bodies
 app.use(cors()); // Enable Cross-Origin Resource Sharing
 app.use(morgan('tiny')); // Log HTTP requests
+
+// ✅ Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'build')));
 
 // ✅ Log incoming requests for debugging
 app.use((req, res, next) => {
@@ -138,6 +142,11 @@ app.use((error, req, res, next) => {
     return res.status(400).json({ error: error.message });
   }
   next(error);
+});
+
+// ✅ Serve the frontend
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 // ✅ Start the Server
